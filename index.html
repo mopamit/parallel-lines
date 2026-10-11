@@ -177,7 +177,6 @@
     .answers .pill { width: min(46%, 200px); font-size: 17px; }
   }
   .progress { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 8px; font-size: 16px; }
-  .progress .level { color: var(--bordeaux); font-weight: 600; }
   .progress .count { color: var(--line-grey); font-weight: 600; }
   .bar { height: 8px; background: #efebe2; border-radius: 99px; overflow: hidden; margin-bottom: 20px; }
   .bar > span { display: block; height: 100%; background: var(--green); border-radius: 99px; transition: width .3s; }
@@ -217,7 +216,7 @@
     <h2 id="instTitle">מה עושים?</h2>
     <p>לפניכם משוואות של שני ישרים.</p>
     <p>החליטו: האם הישרים מקבילים?</p>
-    <p>בתרגול 10 שאלות ב־5 רמות, מהקל אל הקשה.</p>
+    <p>בתרגול 10 שאלות מגוונות.</p>
     <ul class="icon-legend" aria-label="כפתורים">
       <li><img src="assets/icons/restart_rounded_rect.svg" alt="">איפוס – התחלת תרגול חדש</li>
       <li><img src="assets/icons/instructions_rounded_rect.svg" alt="">הוראות מלאות</li>
@@ -232,7 +231,6 @@
   <section class="card question-area" id="stage" aria-label="התרגול">
     <div id="quiz">
       <div class="progress">
-        <span class="level" id="levelLabel"></span>
         <span class="count" id="countLabel"></span>
       </div>
       <div class="bar" aria-hidden="true"><span id="barFill"></span></div>
@@ -260,15 +258,7 @@
   <p>אחרי כל תשובה תקבלו הסבר: מה השיפוע של כל ישר ולמה. תראו גם את שני הישרים במערכת צירים. לחצו על "שאלה הבאה" כדי להמשיך.</p>
   <h3>איך בודקים?</h3>
   <p>מבודדים את <bdi class="m"><i>y</i></bdi> ומביאים כל משוואה לצורה <bdi class="m"><i>y</i><span class="op">=</span><i>mx</i><span class="op">+</span><i>b</i></bdi>. ישרים שונים עם אותו שיפוע <bdi class="m"><i>m</i></bdi> הם מקבילים. אם השיפועים שונים, הישרים נחתכים.</p>
-  <h3>הרמות</h3>
-  <ol>
-    <li>השיפוע גלוי: <bdi class="m"><i>y</i><span class="op">=</span><i>mx</i><span class="op">+</span><i>b</i></bdi>.</li>
-    <li>מקרים מיוחדים: בלי מספר חופשי, ישר אופקי, שיפוע שהוא שבר.</li>
-    <li>סדר האיברים מתחלף: <bdi class="m"><i>y</i><span class="op">=</span><i>b</i><span class="op">+</span><i>mx</i></bdi>.</li>
-    <li>יש מקדם ל־<bdi class="m"><i>y</i></bdi>, וצריך לחלק.</li>
-    <li>צריך להעביר אגפים כדי לבודד את <bdi class="m"><i>y</i></bdi>.</li>
-  </ol>
-  <p>בכל תרגול מוצגות 10 שאלות: 2 מכל רמה, לפי הסדר. בסוף תראו סיכום.</p>
+  <p>בכל תרגול מוצגות 10 שאלות מגוונות. בסוף תראו סיכום.</p>
   <h3>כפתורים</h3>
   <ul class="icon-legend">
     <li><img src="assets/icons/restart_rounded_rect.svg" alt="">איפוס – מתחילים תרגול חדש עם שאלות אחרות.</li>
@@ -283,7 +273,7 @@
   const MINUS = "\u2212";
 
   /* =====================================================================
-     מאגר התרגילים – 5 רמות, 10 זוגות בכל רמה.
+     מאגר התרגילים – קבוצות פנימיות לצורך יצירת תרגול מגוון.
      כל זוג: [משוואה 1, משוואה 2]. אפשר לערוך ולהוסיף.
      התשובה (מקבילים או לא) מחושבת אוטומטית מהמשוואות.
      כתיבה: מספרים שלמים או שברים (1/2), המשתנים x ו-y, סימנים + ו-.
@@ -429,7 +419,6 @@
 
   function renderQuestion() {
     const Q = session[idx];
-    $("levelLabel").textContent = `רמה ${Q.level + 1} · ${LEVELS[Q.level].name}`;
     $("countLabel").textContent = `שאלה ${idx + 1} מתוך ${session.length}`;
     $("barFill").style.width = `${(idx / session.length) * 100}%`;
     const box = $("equations"); box.innerHTML = "";
@@ -491,11 +480,9 @@
 
   function showSummary() {
     const total = results.filter(r => r.correct).length;
-    let rows = "";
-    LEVELS.forEach((lv, li) => {
-      const r = results.filter(x => x.level === li);
-      rows += `<tr><td>רמה ${li + 1} · ${lv.name}</td><td class="res">${r.filter(x => x.correct).length} מתוך ${r.length}</td></tr>`;
-    });
+    const correctCount = results.filter(x => x.correct).length;
+    let rows = `<tr><td>תשובות נכונות</td><td class="res">${correctCount} מתוך ${results.length}</td></tr>`;
+    rows += `<tr><td>תשובות שגויות</td><td class="res">${results.length - correctCount}</td></tr>`;
     const msg = total === results.length ? "כל הכבוד, ענית נכון על כל השאלות!"
               : total >= 7 ? "עבודה טובה. כדאי לחזור על הרמות שבהן היו טעויות."
               : "כדאי לפתוח את התזכורת ולנסות תרגול נוסף.";
